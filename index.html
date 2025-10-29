@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Tutor</title>
+  <style>
+    /* ====== Reset & Fonts ====== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Poppins", sans-serif;
+    }
+
+    body {
+      display: flex;
+      height: 100vh;
+      background-color: #f8fafc;
+      color: #333;
+    }
+
+    /* ====== Sidebar ====== */
+    .sidebar {
+      width: 250px;
+      background: #fff;
+      border-right: 1px solid #ddd;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar h1 {
+      font-size: 24px;
+      color: #2563eb;
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sidebar button {
+      background: #f1f5f9;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: left;
+      font-size: 15px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .sidebar button:hover {
+      background: #2563eb;
+      color: white;
+    }
+
+    /* ====== Chat Section ====== */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: #f8fafc;
+    }
+
+    header {
+      background: #fff;
+      border-bottom: 1px solid #ddd;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h2 {
+      font-size: 20px;
+      color: #333;
+    }
+
+    .user-icon {
+      font-size: 28px;
+      color: #888;
+    }
+
+    /* ====== Chat Messages ====== */
+    .messages {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .message {
+      max-width: 70%;
+      padding: 10px 15px;
+      border-radius: 15px;
+      word-wrap: break-word;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    .message.ai {
+      background: #e5e7eb;
+      align-self: flex-start;
+    }
+
+    .message.user {
+      background: #2563eb;
+      color: white;
+      align-self: flex-end;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ====== Input Area ====== */
+    .input-area {
+      display: flex;
+      padding: 15px;
+      background: #fff;
+      border-top: 1px solid #ddd;
+    }
+
+    .input-area input {
+      flex: 1;
+      border: 1px solid #ccc;
+      border-radius: 25px;
+      padding: 10px 15px;
+      outline: none;
+      font-size: 15px;
+      transition: border 0.2s;
+    }
+
+    .input-area input:focus {
+      border-color: #2563eb;
+    }
+
+    .input-area button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 25px;
+      margin-left: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .input-area button:hover {
+      background: #1d4ed8;
+    }
+
+    /* ====== Responsive ====== */
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <h1>📘 AI Tutor</h1>
+    <button>Java</button>
+    <button>C++</button>
+    <button>Data Structures</button>
+    <button>OS</button>
+    <button>DBMS</button>
+    <button>Networks</button>
+  </aside>
+
+  <!-- ===== Chat Section ===== -->
+  <div class="chat-container">
+    <header>
+      <h2>Tutor Chat</h2>
+      <span class="user-icon">👤</span>
+    </header>
+
+    <div class="messages" id="chat-box">
+      <div class="message ai">👋 Hi! I'm your AI Tutor. What topic do you want to learn today?</div>
+    </div>
+
+    <div class="input-area">
+      <input id="user-input" type="text" placeholder="Ask me anything..." />
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+
+  <!-- ===== Backend Connection Script ===== -->
+  <script>
+    const sendBtn = document.getElementById("send-btn");
+    const input = document.getElementById("user-input");
+    const chatBox = document.getElementById("chat-box");
+
+    // Function to append chat messages
+    function appendMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.classList.add("message", sender);
+      msg.textContent = text;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Function to send messages to Java backend
+    async function sendMessage() {
+      const text = input.value.trim();
+      if (text === "") return;
+
+      appendMessage(text, "user");
+      input.value = "";
+
+      try {
+        // FIXED: Changed to port 8081
+        const response = await fetch("http://localhost:8080/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
+        });
+
+        const data = await response.json();
+        appendMessage(data.reply, "ai");
+      } catch (error) {
+        appendMessage("⚠️ Backend not reachable. Please make sure the Java server is running.", "ai");
+        console.error("Error connecting to backend:", error);
+      }
+    }
+
+    // Event listeners for send button and Enter key
+    sendBtn.addEventListener("click", sendMessage);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+</html>
